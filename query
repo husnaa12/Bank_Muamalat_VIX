@@ -1,0 +1,57 @@
+# PRIMARY KEY
+ALTER TABLE rakamin-bank-muamalat-428106.bank_muamalat.bm_customers
+ADD PRIMARY KEY(CustomerID) NOT ENFORCED;
+
+ALTER TABLE rakamin-bank-muamalat-428106.bank_muamalat.bm_orders
+ADD PRIMARY KEY(OrderID) NOT ENFORCED;
+
+ALTER TABLE rakamin-bank-muamalat-428106.bank_muamalat.bm_product_category
+ADD PRIMARY KEY(CategoryID) NOT ENFORCED;
+
+ALTER TABLE rakamin-bank-muamalat-428106.bank_muamalat.bm_products
+ADD PRIMARY KEY(ProdNumber) NOT ENFORCED;
+
+
+
+# FOREIGN KEY
+ALTER TABLE rakamin-bank-muamalat-428106.bank_muamalat.bm_orders
+ADD FOREIGN KEY (CustomerID)
+REFERENCES bank_muamalat.bm_customers(CustomerID) NOT ENFORCED;
+
+ALTER TABLE rakamin-bank-muamalat-428106.bank_muamalat.bm_orders
+ADD FOREIGN KEY (ProdNumber)
+REFERENCES bank_muamalat.bm_products(ProdNumber) NOT ENFORCED;
+
+ALTER TABLE rakamin-bank-muamalat-428106.bank_muamalat.bm_products
+ADD FOREIGN KEY (Category)
+REFERENCES bank_muamalat.bm_product_category(CategoryID) NOT ENFORCED;
+
+
+
+# ANALYTICS/ MASTER TABLE
+CREATE TABLE IF NOT EXISTS bank_muamalat.analytics AS
+WITH cat_prod AS
+  (SELECT *
+  FROM `rakamin-bank-muamalat-428106.bank_muamalat.bm_products` AS T1
+  LEFT JOIN `bank_muamalat.bm_product_category`AS T2
+      ON T1.Category = T2.CategoryID
+  )
+
+SELECT T1.Date AS order_date,
+        T3.CategoryName AS category_name,
+        T3.ProdName AS product_name,
+        T3.Price AS product_price,
+        T1.Quantity AS order_qty,
+        (T3.Price * T1.Quantity) AS total_sales,
+        T2.CustomerEmail AS cust_email,
+        T2.CustomerCity AS cust_city
+FROM `bank_muamalat.bm_orders` AS T1
+LEFT JOIN `bank_muamalat.bm_customers` AS T2
+    ON T1.CustomerID = T2.CustomerID
+LEFT JOIN cat_prod AS T3
+    ON T1.ProdNumber = T3.ProdNumber
+ORDER BY T1.Date ASC;
+
+
+SELECT *
+FROM `bank_muamalat.analytics`
